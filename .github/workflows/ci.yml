@@ -11,6 +11,6 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-      - run: npm install --no-fund --no-audit
+      - run: npm install --no-fund --no-audit --legacy-peer-deps
       - run: npm run build
       - run: npm test

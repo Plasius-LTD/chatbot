@@ -24,7 +24,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install --no-fund --no-audit
+        run: npm install --no-fund --no-audit --legacy-peer-deps
 
       - name: Apply npm audit fix
         run: npm audit fix --package-lock-only
