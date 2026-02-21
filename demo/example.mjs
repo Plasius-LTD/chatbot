@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 
-const distEntry = new URL("../dist/index.js", import.meta.url);
+const distEntry = new URL("../dist/renderpriority.js", import.meta.url);
 
 if (!existsSync(distEntry)) {
   console.error("Build output not found. Run: npm run build");
@@ -13,3 +13,4 @@ const exported = Object.keys(mod);
 console.log("Package:", "@plasius/chatbot");
 console.log("Export count:", exported.length);
 console.log("Exports:", exported.slice(0, 20));
+console.log("RenderPriority values:", mod.RenderPriority);

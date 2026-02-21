@@ -29,7 +29,22 @@ import { ChatBot } from "@plasius/chatbot";
 npm install
 npm run build
 npm test
+npm run demo:run
 ```
+
+## Demo Sanity Check
+
+```bash
+npm run demo:run
+```
+
+## Publishing
+
+This package is published via GitHub CD only.
+
+1. Configure repository environment `production` with secret `NPM_TOKEN`.
+2. Run `.github/workflows/cd.yml` via **Actions -> CD (Publish to npm) -> Run workflow**.
+3. Select the version bump (`patch`, `minor`, `major`, or `none`) and optional pre-release id.
 
 ## Governance
 
