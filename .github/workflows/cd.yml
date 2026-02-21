@@ -129,8 +129,10 @@ jobs:
 
       - name: Generate SBOM (CycloneDX)
         run: npm sbom --sbom-format=cyclonedx --sbom-type=library --omit dev > sbom.cdx.json
+        continue-on-error: true
 
       - name: Attest SBOM
+        if: ${{ hashFiles('sbom.cdx.json') != '' }}
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: sbom.cdx.json
