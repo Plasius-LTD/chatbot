@@ -9,10 +9,13 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
-  - (placeholder)
+  - Add chatbot API client helpers (`getChatbotUsage`, `sendChatbotMessage`) and typed `ChatbotClientError`.
+  - Add signed-in gating UX and demo usage-limit messaging in the `ChatBot` component.
+  - Add usage/auth/client tests for chatbot API integration behavior.
 
 - **Changed**
-  - (placeholder)
+  - Refactor `ChatBot` to call backend `/ai/chatbot` instead of browser-side OpenAI keys.
+  - Simplify package peer requirements by removing direct `openai` dependency from `@plasius/chatbot`.
 
 - **Fixed**
   - (placeholder)

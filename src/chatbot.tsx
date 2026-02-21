@@ -1,306 +1,270 @@
-import React, { lazy, Suspense, useState, useEffect } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import type { EmojiClickData } from "emoji-picker-react";
+import { FaPaperPlane, FaSmile } from "react-icons/fa";
+import styles from "./styles/chatbot.module.css";
+import {
+  ChatbotClientError,
+  getChatbotUsage,
+  sendChatbotMessage,
+  type ChatMessage,
+  type ChatbotClientOptions,
+  type ChatbotUsage,
+} from "./client.js";
 
 const EmojiPicker = lazy(() =>
-  import("emoji-picker-react/dist/emoji-picker-react.esm.js").then(
-    (module) => ({
-      default: module.EmojiPicker, // <--- force the correct component export
-    })
-  )
+  import("emoji-picker-react/dist/emoji-picker-react.esm.js").then((module) => ({
+    default: module.EmojiPicker,
+  }))
 );
 
-import { FaPaperPlane, FaSmile } from "react-icons/fa";
+type ChatbotState = "loading" | "ready" | "signed_out" | "limit_reached" | "error";
 
-import OpenAI from "openai";
+export interface ChatBotProps extends ChatbotClientOptions {
+  initialMessages?: ChatMessage[];
+  systemPrompt?: string;
+  placeholder?: string;
+  title?: string;
+  onUsageChange?: (usage: ChatbotUsage) => void;
+  onAuthRequired?: () => void;
+}
 
-import styles from "./styles/chatbot.module.css"; // Import a CSS file for styling
+const DEFAULT_TITLE = "Plasius Chatbot";
+const DEFAULT_PLACEHOLDER = "Ask Plasius something...";
+const DEFAULT_SYSTEM_PROMPT =
+  "You are the Plasius assistant. Keep responses concise, practical, and factual.";
 
-interface ChatBotProps {
-  openaiOrgID: string;
-  openaiProjectKey: string;
-  openaiAPIKey: string;
+function statusMessage(state: ChatbotState, usage: ChatbotUsage | null): string {
+  if (state === "loading") return "Checking access...";
+  if (state === "signed_out") return "Sign in to use chatbot.";
+  if (state === "limit_reached") {
+    if (usage) {
+      return `Demo limit reached (${usage.used}/${usage.limit} messages).`;
+    }
+    return "Demo limit reached.";
+  }
+  if (state === "error") return "Chatbot is currently unavailable.";
+  return "";
 }
 
 export default function ChatBot(
   props: React.PropsWithChildren<ChatBotProps>
 ): React.ReactElement {
-  const [messages, setMessages] = useState<
-    OpenAI.Chat.Completions.ChatCompletionMessageParam[]
-  >([]);
-  const [input, setInput] = useState<string>("");
-  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(props.initialMessages ?? []);
+  const [input, setInput] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [state, setState] = useState<ChatbotState>("loading");
+  const [usage, setUsage] = useState<ChatbotUsage | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const openai = new OpenAI({
-    apiKey: props.openaiAPIKey,
-    project: props.openaiProjectKey,
-    organization: props.openaiOrgID,
-    dangerouslyAllowBrowser: true,
-  });
+  const clientOptions = useMemo<ChatbotClientOptions>(
+    () => ({
+      endpoint: props.endpoint,
+      credentials: props.credentials,
+      headers: props.headers,
+      fetchFn: props.fetchFn,
+      csrfCookieName: props.csrfCookieName,
+      csrfHeaderName: props.csrfHeaderName,
+      bootstrapCsrf: props.bootstrapCsrf,
+    }),
+    [
+      props.endpoint,
+      props.credentials,
+      props.headers,
+      props.fetchFn,
+      props.csrfCookieName,
+      props.csrfHeaderName,
+      props.bootstrapCsrf,
+    ]
+  );
 
-  const chat = async (
-    msgs: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-    callback: (arg: OpenAI.Chat.Completions.ChatCompletionMessageParam) => void
-  ): Promise<void> => {
-    try {
-      const value = await openai.chat.completions.create({
-        model: "gpt-o1",
-        messages: msgs,
-      });
-      value.choices.forEach((choice: OpenAI.ChatCompletion.Choice) => {
-        callback({ content: choice.message.content ?? "", role: "system" });
-      });
-    } catch (err) {
-      console.error("chat() failed", err);
-    }
-  };
-
-  const objects = window.location.origin + "/api/objects/list";
-  const decorations = window.location.origin + "/api/decorations/list";
-  const locations = window.location.origin + "/api/locations/list";
-  const surfaces = window.location.origin + "/api/surfaces/list";
+  const applyUsage = useCallback(
+    (nextUsage: ChatbotUsage) => {
+      setUsage(nextUsage);
+      props.onUsageChange?.(nextUsage);
+      setState(nextUsage.exhausted ? "limit_reached" : "ready");
+    },
+    [props.onUsageChange]
+  );
 
   useEffect(() => {
-    void chat(
-      [
-        {
-          role: "system",
-          content: `You are a game designer, you are responsible for helping build the world and game mechanics, adjusting the game to be more fun for the player playing, 
-          using your knowledge of gameplay mechanics and world building you are going to help assign objects to the map.
-          
-          You can find the list of objects from the following url: ${objects}
-          You can find the list of decorations from the following url: ${decorations}
-          You can find the list of surfaces from the following url: ${surfaces}
+    let active = true;
 
-          Each location is a hexagon with a radius of 10 meters and 10m tall (allowing  for locations to be on top of each other!), and a q and r coordinate system.
-          The q coordinate is the horizontal axis, and the r coordinate is the vertical axis. The center of the hexagon is at (0, 0), 
-          and the corners are at (5, 8.66), (10, 0), (5, -8.66), (-5, -8.66), (-10, 0), and (-5, 8.66).
-          Adjacent hexagons are at (q + 1, r), (q - 1, r), (q, r + 1), (q, r - 1), (q + 1, r - 1), and (q - 1, r + 1) and you should try and 
-          coordinate over the hexagons to make sure the objects are placed in a way that makes sense.
-          
-          Try and align surfaces, decorations, and objects to a 1m size hexagon when placing items so they align to each other in the world, 
-          but avoid overlapping the objects with each other, unless they are meant to overlap (like a chair under a table, or a tree in a bush).
-          Surfaces should not overlap with each other, and should be placed in a way that makes sense for the location, 
-          such as a road should be continuous and have purpose, to or from somewhere, 
-          use the locations map to identify good roads, forests, mountains, lakes and oceans locations.
-          
-          for each prompt the user gives you, will relate to a specific location in the game world, you should take in the location, 
-          some basic information about the users expectations for the location and return a json object with the following fields:
-            {
-              "location": {
-                "r": "number", // 10m hexagon radius
-                "q": "number", // 10m hexagon radius
-                "elevation": "number",
-                "name": "string",
-                "description": "string",
-                "type": "string",
-              
-              "surfaces": [{
-                "location": {
-                  "q": "number", // 1m hexagon radius
-                  "r": "number", // 1m hexagon radius
-                  "elevation": "number"
-                },
-                "name": "string",
-                "type": "string",
-                "description": "string",
-                "url": "string",
-                "image": "string",
-                "rotation": "number",
-                "color": "string"
-              }],
-              "decorations": [
-                {
-                  "name": "string",
-                  "type": "string",
-                  "description": "string",
-                  "url": "string",
-                  "image": "string",
-                  "rotation": "number",
-                  "scale": "number",
-                  "color": "string",
-                  "location": {
-                    "x": "number",
-                    "y": "number",
-                    "z": "number"
-                  }
-                }
-              ],
-              "objects": [
-                {
-                  "name": "string",
-                  "type": "string",
-                  "description": "string",
-                  "url": "string",
-                  "image": "string",
-                  "rotation": "number",
-                  "scale": "number",
-                  "color": "string",
-                  "location": {
-                    "x": "number",
-                    "y": "number",
-                    "z": "number"
-                  }
-                }
-              ]
-            }
-          }
-
-          You can find the list of populated locations from the following url: ${locations} for reference and to allow you to be more creative in your assignments. 
-          If your current location is in the list, then take the current objects and decorations into account when placing the new objects, and remove or replace the old ones.`,
-        },
-      ],
-      (arg: OpenAI.Chat.Completions.ChatCompletionMessageParam) => {
-        setMessages((prev) => [...prev, arg]);
-      }
-    );
-  }, []);
-
-  const handleSend = async (): Promise<void> => {
-    if (input.trim()) {
-      setMessages((prev) => [...prev, { content: input, role: "user" }]);
-      setInput("");
-      setShowEmojiPicker(false);
-
+    const loadUsage = async () => {
+      setState("loading");
+      setErrorMessage(null);
       try {
-        const value = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ content: input, role: "user" }],
-        });
-        value.choices.forEach((choice: OpenAI.ChatCompletion.Choice) => {
-          setMessages((prev) => [
-            ...prev,
-            { content: choice.message.content ?? "", role: "system" },
-          ]);
-        });
-      } catch (err) {
-        console.error("handleSend() failed", err);
+        const result = await getChatbotUsage(clientOptions);
+        if (!active) return;
+        applyUsage(result.usage);
+      } catch (error) {
+        if (!active) return;
+        if (error instanceof ChatbotClientError && error.status === 401) {
+          setState("signed_out");
+          setErrorMessage("Sign in to start chatting.");
+          props.onAuthRequired?.();
+          return;
+        }
+
+        setState("error");
+        setErrorMessage(
+          error instanceof Error ? error.message : "Failed to load chatbot."
+        );
       }
-    }
-  };
+    };
+
+    void loadUsage();
+    return () => {
+      active = false;
+    };
+  }, [applyUsage, clientOptions, props.onAuthRequired]);
+
+  const sendDisabled =
+    isSending ||
+    state === "loading" ||
+    state === "signed_out" ||
+    state === "limit_reached" ||
+    !input.trim();
 
   const handleEmojiClick = (emojiData: EmojiClickData): void => {
     setInput((prev) => prev + (emojiData.emoji ?? ""));
   };
 
-  const contentToString = (
-    content: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]
-  ): string => {
-    if (typeof content === "string" || content == null) return content ?? "";
-    if (Array.isArray(content)) {
-      return content
-        .map((part: unknown) => {
-          if (typeof part === "string") return part;
-          if (
-            typeof part === "object" &&
-            part !== null &&
-            Object.prototype.hasOwnProperty.call(part, "text")
-          ) {
-            const text = (part as Record<string, unknown>).text;
-            return typeof text === "string" ? text : "";
+  const handleSend = useCallback(async (): Promise<void> => {
+    const message = input.trim();
+    if (!message || sendDisabled) return;
+
+    const userMessage: ChatMessage = { role: "user", content: message };
+    const nextHistory = [...messages, userMessage].slice(-20);
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setShowEmojiPicker(false);
+    setIsSending(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await sendChatbotMessage(
+        {
+          message,
+          history: nextHistory,
+          systemPrompt: props.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+        },
+        clientOptions
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: response.reply },
+      ]);
+      applyUsage(response.usage);
+    } catch (error) {
+      if (error instanceof ChatbotClientError) {
+        if (error.status === 401) {
+          setState("signed_out");
+          setErrorMessage("You must be signed in to use chatbot.");
+          props.onAuthRequired?.();
+          return;
+        }
+
+        if (error.status === 429) {
+          if (error.usage) {
+            applyUsage(error.usage);
+          } else {
+            setState("limit_reached");
           }
-          return "";
-        })
-        .join("");
+          setErrorMessage("You reached the 10 message demo limit.");
+          return;
+        }
+
+        setState("error");
+        setErrorMessage(error.message);
+        return;
+      }
+
+      setState("error");
+      setErrorMessage(error instanceof Error ? error.message : "Message failed.");
+    } finally {
+      setIsSending(false);
     }
-    return "";
-  };
+  }, [
+    applyUsage,
+    clientOptions,
+    input,
+    messages,
+    props.onAuthRequired,
+    props.systemPrompt,
+    sendDisabled,
+  ]);
 
   return (
     <div className={styles.chatbotcontainer}>
+      <div className={styles.header}>
+        <div className={styles.title}>{props.title ?? DEFAULT_TITLE}</div>
+        <div className={styles.usage}>
+          {usage ? `${usage.used}/${usage.limit} used` : "No usage data"}
+        </div>
+      </div>
+
+      {(state !== "ready" || errorMessage) && (
+        <div className={styles.notice}>
+          {errorMessage ?? statusMessage(state, usage)}
+        </div>
+      )}
+
       <div className={styles.messagesbox}>
         {messages.map((msg, index) => (
-          <div key={index} className={styles.message + ` ${styles[msg.role]}`}>
-            <div className={styles.bubble}>{contentToString(msg.content)}</div>
+          <div key={`${msg.role}-${index}`} className={styles.message}>
+            <div className={styles[msg.role]}>
+              <div className={styles.bubble}>{msg.content}</div>
+            </div>
           </div>
         ))}
       </div>
+
       <div className={styles.inputbox}>
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyUp={async (e) => {
-            if (e.key === "Enter" && e.shiftKey === false) {
+          disabled={sendDisabled}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyUp={async (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
               await handleSend();
-              e.stopPropagation();
+              event.stopPropagation();
             }
           }}
-          placeholder="Type a message..."
+          placeholder={props.placeholder ?? DEFAULT_PLACEHOLDER}
         />
-        <FaSmile
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className={styles.emojiicon}
-        />
+
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => setShowEmojiPicker((current) => !current)}
+          disabled={state === "signed_out" || state === "limit_reached"}
+          aria-label="Open emoji picker"
+        >
+          <FaSmile className={styles.emojiicon} />
+        </button>
+
         {showEmojiPicker && (
-          <Suspense fallback={<div>Loading emoji picker...</div>}>
-            <EmojiPicker onEmojiClick={handleEmojiClick} />
-          </Suspense>
-        )}
-        <FaPaperPlane onClick={handleSend} className={styles.sendicon} />
-      </div>
-    </div>
-  );
-}
-
-/*
-
-// Chatbot.tsx
-import React, { useState } from 'react';
-import { FaPaperPlane, FaSmile } from 'react-icons/fa';
-import Picker, { IEmojiData } from 'emoji-picker-react';
-
-interface Message {
-  text: string;
-  user: 'me' | 'bot';
-}
-
-const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-
-  const handleSend = () => {
-    if (input.trim()) {
-      setMessages([...messages, { text: input, user: 'me' }]);
-      setInput('');
-      setShowEmojiPicker(false);
-
-      // Here you would also call the OpenAI API and handle the response
-      // Example:
-      // fetchOpenAIResponse(input).then(response => {
-      //   setMessages([...messages, { text: input, user: 'me' }, { text: response, user: 'bot' }]);
-      // });
-    }
-  };
-
-  const handleEmojiClick = (event: React.MouseEvent<Element, MouseEvent>, emojiObject: IEmojiData) => {
-    setInput(input + emojiObject.emoji);
-  };
-
-  return (
-    <div className="chatbot-container">
-      <div className="messages-box">
-        {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.user}`}>
-            {msg.text}
+          <div className={styles.emojiPicker}>
+            <Suspense fallback={<div>Loading emoji picker...</div>}>
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+            </Suspense>
           </div>
-        ))}
-      </div>
-      <div className="input-box">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-        />
-        <FaSmile onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="emoji-icon" />
-        {showEmojiPicker && <Picker onEmojiClick={handleEmojiClick} />}
-        <FaPaperPlane onClick={handleSend} className="send-icon" />
+        )}
+
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => void handleSend()}
+          disabled={sendDisabled}
+          aria-label="Send message"
+        >
+          <FaPaperPlane className={styles.sendicon} />
+        </button>
       </div>
     </div>
   );
-};
-
-export default Chatbot;
-
-*/
+}
