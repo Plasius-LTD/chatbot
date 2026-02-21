@@ -46,7 +46,9 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install deps
-        run: npm ci --no-fund --no-audit --legacy-peer-deps
+        run: |
+          set -euo pipefail
+          npm ci --no-fund --no-audit --legacy-peer-deps || npm install --no-fund --no-audit --legacy-peer-deps
 
       - name: Test
         run: npm run test
@@ -94,16 +96,25 @@ jobs:
           esac
 
           RELEASE_VERSION=$(node -p "require('./package.json').version")
+
+          # If version already exists on npm, keep bumping patch until free.
+          # This prevents publish failures when tags/versions already exist remotely.
+          while npm view "${PACKAGE_NAME}@${RELEASE_VERSION}" version --registry https://registry.npmjs.org >/dev/null 2>&1; do
+            if [ "${BUMP:-patch}" = "none" ]; then
+              echo "Version already exists on npm and bump=none was requested: ${PACKAGE_NAME}@${RELEASE_VERSION}" >&2
+              exit 1
+            fi
+            echo "Version already exists on npm (${PACKAGE_NAME}@${RELEASE_VERSION}); bumping patch..."
+            npm version patch -m "chore: release v%s [skip ci]"
+            SHOULD_PUSH="true"
+            RELEASE_VERSION=$(node -p "require('./package.json').version")
+          done
+
           RELEASE_TAG="v${RELEASE_VERSION}"
 
           if ! git rev-parse "${RELEASE_TAG}" >/dev/null 2>&1; then
             git tag "${RELEASE_TAG}"
             SHOULD_PUSH="true"
-          fi
-
-          if npm view "${PACKAGE_NAME}@${RELEASE_VERSION}" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
-            echo "Version already exists on npm: ${PACKAGE_NAME}@${RELEASE_VERSION}" >&2
-            exit 1
           fi
 
           echo "package_name=${PACKAGE_NAME}" >> "$GITHUB_OUTPUT"
