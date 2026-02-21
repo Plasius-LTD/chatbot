@@ -53,9 +53,6 @@ jobs:
       - name: Test
         run: npm run test
 
-      - name: Build
-        run: npm run build --if-present
-
       - name: Prepare release metadata
         id: release
         env:
@@ -124,6 +121,9 @@ jobs:
           echo "should_push=${SHOULD_PUSH}" >> "$GITHUB_OUTPUT"
 
           echo "Prepared release ${PACKAGE_NAME}@${RELEASE_VERSION} (${RELEASE_TAG})"
+
+      - name: Build
+        run: npm run build --if-present
 
       - name: Generate SBOM (CycloneDX)
         run: npm sbom --sbom-format=cyclonedx --sbom-type=library --omit dev > sbom.cdx.json
