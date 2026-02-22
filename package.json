@@ -28,9 +28,9 @@
   "author": "Plasius LTD <development@plasius.co.uk>",
   "license": "MIT",
   "dependencies": {
-    "@plasius/entity-manager": "^1.0.4",
+    "@plasius/entity-manager": "^1.0.5",
     "@plasius/error": "^1.0.3",
-    "@plasius/profile": "^1.0.4",
+    "@plasius/profile": "^1.0.5",
     "@plasius/schema": "^1.2.1",
     "emoji-picker-react": "^4.12.2",
     "react": "19.2.4",
