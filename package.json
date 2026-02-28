@@ -23,7 +23,9 @@
     "build:cjs": "tsc -p tsconfig.json --module commonjs --moduleResolution node --outDir dist-cjs --tsBuildInfoFile dist-cjs/tsconfig.tsbuildinfo --listEmittedFiles && rsync -av --include '*/' --include '*.module.css' --exclude '*' src/ dist-cjs/ || true",
     "lint": "eslint .",
     "prepare": "npm run build",
-    "demo:run": "npm run build && node demo/example.mjs"
+    "demo:run": "npm run build && node demo/example.mjs",
+    "pack:check": "node scripts/verify-public-package.cjs",
+    "prepublishOnly": "npm run build && npm run pack:check"
   },
   "author": "Plasius LTD <development@plasius.co.uk>",
   "license": "MIT",
