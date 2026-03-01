@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function main() {
-  const cacheDir = path.resolve(process.cwd(), ".npm-cache-packcheck");
+  const cacheDir = path.resolve(process.cwd(), ".npm-cache", "packcheck");
   const output = execSync(
     `npm pack --dry-run --json --ignore-scripts --cache "${cacheDir}"`,
     {
@@ -16,6 +16,9 @@ function main() {
   const parsed = parseNpmPackJson(output);
   const files = Array.isArray(parsed) && parsed[0]?.files ? parsed[0].files : [];
   const paths = files.map((entry) => entry.path);
+
+  verifyCjsMetadata();
+  ensureTarballIncludes(paths, "dist-cjs/package.json");
 
   const forbiddenTarballPathPatterns = [
     {
@@ -96,6 +99,39 @@ function main() {
   console.log("Public package check passed.");
 }
 
+
+function verifyCjsMetadata() {
+  const distCjsPackageJsonPath = path.resolve(process.cwd(), "dist-cjs/package.json");
+  if (!fs.existsSync(distCjsPackageJsonPath)) {
+    console.error(
+      "Public package check failed. Missing dist-cjs/package.json for CommonJS runtime metadata."
+    );
+    process.exit(1);
+  }
+
+  const rawDistCjsPackageJson = fs.readFileSync(distCjsPackageJsonPath, "utf8");
+  let parsedDistCjsPackageJson;
+  try {
+    parsedDistCjsPackageJson = JSON.parse(rawDistCjsPackageJson);
+  } catch {
+    console.error("Public package check failed. dist-cjs/package.json is not valid JSON.");
+    process.exit(1);
+  }
+
+  if (parsedDistCjsPackageJson.type !== "commonjs") {
+    console.error(
+      "Public package check failed. dist-cjs/package.json must set {\"type\":\"commonjs\"}."
+    );
+    process.exit(1);
+  }
+}
+
+function ensureTarballIncludes(paths, requiredPath) {
+  if (!paths.includes(requiredPath)) {
+    console.error(`Public package check failed. npm pack output is missing ${requiredPath}.`);
+    process.exit(1);
+  }
+}
 function parseNpmPackJson(rawOutput) {
   const start = rawOutput.indexOf("[");
   const end = rawOutput.lastIndexOf("]");
