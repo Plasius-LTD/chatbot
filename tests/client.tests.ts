@@ -22,7 +22,6 @@ describe("@plasius/chatbot client", () => {
   });
 
   afterEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete (globalThis as Record<string, unknown>).document;
   });
 
@@ -86,5 +85,50 @@ describe("@plasius/chatbot client", () => {
     const [, options] = fetchMock.mock.calls[1] ?? [];
     const headers = options?.headers as Record<string, string>;
     expect(headers["x-csrf-token"]).toBe("token123");
+  });
+
+  it("throws a typed error when chatbot usage limit is reached", async () => {
+    const usage = { limit: 10, used: 10, remaining: 0, exhausted: true };
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse(
+        {
+          error: "CHATBOT_LIMIT_REACHED",
+          message: "Message limit reached.",
+          usage,
+        },
+        429
+      )
+    );
+
+    await expect(
+      sendChatbotMessage(
+        { message: "hello" },
+        {
+          fetchFn: fetchMock,
+          bootstrapCsrf: false,
+        }
+      )
+    ).rejects.toMatchObject({
+      name: "ChatbotClientError",
+      status: 429,
+      code: "CHATBOT_LIMIT_REACHED",
+      usage,
+    });
+  });
+
+  it("throws when chatbot reply payload is invalid", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ reply: "ok", usage: null }));
+
+    await expect(
+      sendChatbotMessage(
+        { message: "hello" },
+        {
+          fetchFn: fetchMock,
+          bootstrapCsrf: false,
+        }
+      )
+    ).rejects.toThrow("Invalid chatbot response.");
   });
 });
