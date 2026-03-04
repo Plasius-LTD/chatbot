@@ -84,8 +84,9 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.9...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
+[1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
 ## [1.0.0] - 2026-02-11
 
