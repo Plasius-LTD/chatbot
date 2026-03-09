@@ -12,6 +12,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - Raised the minimum `@plasius/schema` dependency to `^1.2.6` to align with field exposure and safe serialization support across shared packages.
   - Hardened GitHub CD publish flow to publish only after successful install, test, and build, then push tags/releases post-publish.
   - Standardized npm publish path on workflow-dispatched `.github/workflows/cd.yml` using provenance and production environment secrets.
   - Replaced `audit:deps` from `depcheck` to `npm ls --all --omit=optional --omit=peer > /dev/null 2>&1 || true` to avoid deprecated dependency-chain risk.

@@ -34,7 +34,7 @@
     "@plasius/entity-manager": "^1.0.10",
     "@plasius/error": "^1.0.9",
     "@plasius/profile": "^1.0.12",
-    "@plasius/schema": "^1.2.4",
+    "@plasius/schema": "^1.2.6",
     "emoji-picker-react": "^4.12.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
