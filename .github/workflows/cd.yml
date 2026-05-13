@@ -146,8 +146,8 @@ jobs:
 
       - name: Create GitHub Release draft (immutable-safe)
         env:
-          GH_TOKEN: ${ secrets.GITHUB_TOKEN }
-          TAG: ${ steps.release.outputs.release_tag }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
 
@@ -192,8 +192,8 @@ jobs:
 
       - name: Publish GitHub Release
         env:
-          GH_TOKEN: ${ secrets.GITHUB_TOKEN }
-          TAG: ${ steps.release.outputs.release_tag }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
 
