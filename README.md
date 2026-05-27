@@ -29,6 +29,26 @@ When CJS output is emitted under `dist-cjs/*.js` with `type: module`, `dist-cjs/
 import { ChatBot } from "@plasius/chatbot";
 ```
 
+### Translations
+
+The chatbot ships `en-GB` UI and client-error defaults resolved through
+`@plasius/translations`. `title` and `placeholder` remain direct component
+overrides; pass `translate` when a host application wants to resolve the stable
+chatbot keys with its own locale bundle.
+
+```tsx
+import { ChatBot, type ChatbotTranslate } from "@plasius/chatbot";
+
+const translate: ChatbotTranslate = (key, args) => i18n.t(key, args);
+
+<ChatBot
+  endpoint="/ai/chatbot"
+  title="Support"
+  placeholder="Ask a question"
+  translate={translate}
+/>;
+```
+
 ## Development
 
 ```bash
