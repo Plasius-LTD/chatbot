@@ -1,3 +1,10 @@
+import {
+  chatbotTranslationKeys,
+  translateChatbotText,
+  type ChatbotTranslate,
+  type ChatbotTranslationKey,
+} from "./i18n.js";
+
 export type ChatRole = "system" | "user" | "assistant";
 
 export interface ChatMessage {
@@ -30,6 +37,7 @@ export interface ChatbotClientOptions {
   csrfCookieName?: string;
   csrfHeaderName?: string;
   bootstrapCsrf?: boolean;
+  translate?: ChatbotTranslate;
 }
 
 interface ErrorPayload {
@@ -42,13 +50,21 @@ export class ChatbotClientError extends Error {
   status: number;
   code?: string;
   usage?: ChatbotUsage;
+  messageKey?: ChatbotTranslationKey;
 
-  constructor(status: number, message: string, code?: string, usage?: ChatbotUsage) {
+  constructor(
+    status: number,
+    message: string,
+    code?: string,
+    usage?: ChatbotUsage,
+    messageKey?: ChatbotTranslationKey
+  ) {
     super(message);
     this.name = "ChatbotClientError";
     this.status = status;
     this.code = code;
     this.usage = usage;
+    this.messageKey = messageKey;
   }
 }
 
@@ -56,10 +72,10 @@ const DEFAULT_ENDPOINT = "/ai/chatbot";
 const DEFAULT_CSRF_COOKIE_NAME = "csrf-token";
 const DEFAULT_CSRF_HEADER_NAME = "x-csrf-token";
 
-function resolveFetch(fetchFn?: typeof fetch): typeof fetch {
+function resolveFetch(fetchFn?: typeof fetch, translate?: ChatbotTranslate): typeof fetch {
   const resolved = fetchFn ?? (typeof fetch !== "undefined" ? fetch : undefined);
   if (!resolved) {
-    throw new Error("No fetch implementation is available.");
+    throw new Error(translateChatbotText(chatbotTranslationKeys.noFetch, undefined, translate));
   }
   return resolved;
 }
@@ -129,17 +145,33 @@ async function parseBody(response: Response): Promise<unknown> {
   }
 }
 
-function normalizeError(status: number, body: unknown): ChatbotClientError {
+function messageKeyForStatus(status: number): ChatbotTranslationKey {
+  if (status === 401) {
+    return chatbotTranslationKeys.signInRequired;
+  }
+  if (status === 429) {
+    return chatbotTranslationKeys.usageLimitReached;
+  }
+  return chatbotTranslationKeys.requestFailed;
+}
+
+function normalizeError(
+  status: number,
+  body: unknown,
+  translate?: ChatbotTranslate
+): ChatbotClientError {
   const payload = body && typeof body === "object" ? (body as ErrorPayload) : undefined;
-  const fallbackMessage =
-    status === 401
-      ? "Sign in to use chatbot."
-      : status === 429
-        ? "Chatbot usage limit reached."
-        : "Chatbot request failed.";
+  const messageKey = messageKeyForStatus(status);
+  const fallbackMessage = translateChatbotText(messageKey, undefined, translate);
   const message = payload?.message ?? fallbackMessage;
 
-  return new ChatbotClientError(status, message, payload?.error, payload?.usage);
+  return new ChatbotClientError(
+    status,
+    message,
+    payload?.error,
+    payload?.usage,
+    messageKey
+  );
 }
 
 async function ensureCsrfToken(
@@ -166,7 +198,7 @@ async function ensureCsrfToken(
 export async function getChatbotUsage(
   options: ChatbotClientOptions = {}
 ): Promise<ChatbotUsageResponse> {
-  const fetcher = resolveFetch(options.fetchFn);
+  const fetcher = resolveFetch(options.fetchFn, options.translate);
   const endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
   const customHeaders = await resolveHeaders(options.headers);
 
@@ -181,15 +213,19 @@ export async function getChatbotUsage(
 
   const body = await parseBody(response);
   if (!response.ok) {
-    throw normalizeError(response.status, body);
+    throw normalizeError(response.status, body, options.translate);
   }
 
   if (!body || typeof body !== "object") {
-    throw new Error("Invalid chatbot usage response.");
+    throw new Error(
+      translateChatbotText(chatbotTranslationKeys.invalidUsageResponse, undefined, options.translate)
+    );
   }
   const usage = normalizeUsage((body as Record<string, unknown>).usage);
   if (!usage) {
-    throw new Error("Invalid chatbot usage response.");
+    throw new Error(
+      translateChatbotText(chatbotTranslationKeys.invalidUsageResponse, undefined, options.translate)
+    );
   }
 
   return { usage };
@@ -203,7 +239,7 @@ export async function sendChatbotMessage(
   },
   options: ChatbotClientOptions = {}
 ): Promise<ChatbotReply> {
-  const fetcher = resolveFetch(options.fetchFn);
+  const fetcher = resolveFetch(options.fetchFn, options.translate);
   const endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
   const customHeaders = await resolveHeaders(options.headers);
   const baseHeaders: HeadersInit = {
@@ -234,11 +270,13 @@ export async function sendChatbotMessage(
 
   const body = await parseBody(response);
   if (!response.ok) {
-    throw normalizeError(response.status, body);
+    throw normalizeError(response.status, body, options.translate);
   }
 
   if (!body || typeof body !== "object") {
-    throw new Error("Invalid chatbot response.");
+    throw new Error(
+      translateChatbotText(chatbotTranslationKeys.invalidResponse, undefined, options.translate)
+    );
   }
 
   const content = body as Record<string, unknown>;
@@ -247,7 +285,9 @@ export async function sendChatbotMessage(
   const usage = normalizeUsage(content.usage);
 
   if (typeof reply !== "string" || typeof model !== "string" || !usage) {
-    throw new Error("Invalid chatbot response.");
+    throw new Error(
+      translateChatbotText(chatbotTranslationKeys.invalidResponse, undefined, options.translate)
+    );
   }
 
   return { reply, model, usage };

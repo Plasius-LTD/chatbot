@@ -3,6 +3,7 @@ import {
   getChatbotUsage,
   sendChatbotMessage,
 } from "../src/client.js";
+import { chatbotTranslationKeys } from "../src/i18n.js";
 
 function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
@@ -51,7 +52,11 @@ describe("@plasius/chatbot client", () => {
       throw new Error("Expected usage call to fail");
     } catch (error) {
       expect(error).toBeInstanceOf(ChatbotClientError);
-      expect(error).toMatchObject({ status: 401 });
+      expect(error).toMatchObject({
+        status: 401,
+        message: "Sign in to use chatbot.",
+        messageKey: chatbotTranslationKeys.signInRequired,
+      });
     }
   });
 
@@ -112,7 +117,25 @@ describe("@plasius/chatbot client", () => {
       name: "ChatbotClientError",
       status: 429,
       code: "CHATBOT_LIMIT_REACHED",
+      messageKey: chatbotTranslationKeys.usageLimitReached,
       usage,
+    });
+  });
+
+  it("allows client fallback errors to use a supplied translator", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}, 500));
+
+    await expect(
+      getChatbotUsage({
+        fetchFn: fetchMock,
+        translate: (key) =>
+          key === chatbotTranslationKeys.requestFailed ? "Translated request failure" : key,
+      })
+    ).rejects.toMatchObject({
+      name: "ChatbotClientError",
+      status: 500,
+      message: "Translated request failure",
+      messageKey: chatbotTranslationKeys.requestFailed,
     });
   });
 

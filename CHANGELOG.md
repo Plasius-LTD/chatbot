@@ -9,9 +9,10 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
-  - (placeholder)
+  - Added package-owned `en-GB` chatbot UI/client-error translations and helper exports backed by `@plasius/translations`.
 
 - **Changed**
+  - Chatbot status text, accessibility labels, fallback errors, and client fallback errors now resolve through stable translation keys while preserving `title` and `placeholder` overrides.
   - Raised the minimum `@plasius/schema` dependency to `^1.2.6` to align with field exposure and safe serialization support across shared packages.
   - Hardened GitHub CD publish flow to publish only after successful install, test, and build, then push tags/releases post-publish.
   - Standardized npm publish path on workflow-dispatched `.github/workflows/cd.yml` using provenance and production environment secrets.

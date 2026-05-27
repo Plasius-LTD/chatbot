@@ -10,6 +10,11 @@ import {
   type ChatbotClientOptions,
   type ChatbotUsage,
 } from "./client.js";
+import {
+  chatbotTranslationKeys,
+  translateChatbotText,
+  type ChatbotTranslate,
+} from "./i18n.js";
 
 const EmojiPicker = lazy(() =>
   import("emoji-picker-react/dist/emoji-picker-react.esm.js").then((module) => ({
@@ -24,25 +29,38 @@ export interface ChatBotProps extends ChatbotClientOptions {
   systemPrompt?: string;
   placeholder?: string;
   title?: string;
+  translate?: ChatbotTranslate;
   onUsageChange?: (usage: ChatbotUsage) => void;
   onAuthRequired?: () => void;
 }
 
-const DEFAULT_TITLE = "Plasius Chatbot";
-const DEFAULT_PLACEHOLDER = "Ask Plasius something...";
 const DEFAULT_SYSTEM_PROMPT =
   "You are the Plasius assistant. Keep responses concise, practical, and factual.";
 
-function statusMessage(state: ChatbotState, usage: ChatbotUsage | null): string {
-  if (state === "loading") return "Checking access...";
-  if (state === "signed_out") return "Sign in to use chatbot.";
+function statusMessage(
+  state: ChatbotState,
+  usage: ChatbotUsage | null,
+  translate?: ChatbotTranslate
+): string {
+  if (state === "loading") {
+    return translateChatbotText(chatbotTranslationKeys.checkingAccess, undefined, translate);
+  }
+  if (state === "signed_out") {
+    return translateChatbotText(chatbotTranslationKeys.signInToUse, undefined, translate);
+  }
   if (state === "limit_reached") {
     if (usage) {
-      return `Demo limit reached (${usage.used}/${usage.limit} messages).`;
+      return translateChatbotText(
+        chatbotTranslationKeys.demoLimitReachedWithUsage,
+        { used: usage.used, limit: usage.limit },
+        translate
+      );
     }
-    return "Demo limit reached.";
+    return translateChatbotText(chatbotTranslationKeys.demoLimitReached, undefined, translate);
   }
-  if (state === "error") return "Chatbot is currently unavailable.";
+  if (state === "error") {
+    return translateChatbotText(chatbotTranslationKeys.unavailable, undefined, translate);
+  }
   return "";
 }
 
@@ -66,6 +84,7 @@ export default function ChatBot(
       csrfCookieName: props.csrfCookieName,
       csrfHeaderName: props.csrfHeaderName,
       bootstrapCsrf: props.bootstrapCsrf,
+      translate: props.translate,
     }),
     [
       props.endpoint,
@@ -75,6 +94,7 @@ export default function ChatBot(
       props.csrfCookieName,
       props.csrfHeaderName,
       props.bootstrapCsrf,
+      props.translate,
     ]
   );
 
@@ -101,14 +121,18 @@ export default function ChatBot(
         if (!active) return;
         if (error instanceof ChatbotClientError && error.status === 401) {
           setState("signed_out");
-          setErrorMessage("Sign in to start chatting.");
+          setErrorMessage(
+            translateChatbotText(chatbotTranslationKeys.signInStart, undefined, props.translate)
+          );
           props.onAuthRequired?.();
           return;
         }
 
         setState("error");
         setErrorMessage(
-          error instanceof Error ? error.message : "Failed to load chatbot."
+          error instanceof Error
+            ? error.message
+            : translateChatbotText(chatbotTranslationKeys.failedToLoad, undefined, props.translate)
         );
       }
     };
@@ -117,7 +141,7 @@ export default function ChatBot(
     return () => {
       active = false;
     };
-  }, [applyUsage, clientOptions, props.onAuthRequired]);
+  }, [applyUsage, clientOptions, props.onAuthRequired, props.translate]);
 
   const sendDisabled =
     isSending ||
@@ -162,7 +186,13 @@ export default function ChatBot(
       if (error instanceof ChatbotClientError) {
         if (error.status === 401) {
           setState("signed_out");
-          setErrorMessage("You must be signed in to use chatbot.");
+          setErrorMessage(
+            translateChatbotText(
+              chatbotTranslationKeys.signedInRequired,
+              undefined,
+              props.translate
+            )
+          );
           props.onAuthRequired?.();
           return;
         }
@@ -173,7 +203,13 @@ export default function ChatBot(
           } else {
             setState("limit_reached");
           }
-          setErrorMessage("You reached the 10 message demo limit.");
+          setErrorMessage(
+            translateChatbotText(
+              chatbotTranslationKeys.userDemoLimitReached,
+              undefined,
+              props.translate
+            )
+          );
           return;
         }
 
@@ -183,7 +219,11 @@ export default function ChatBot(
       }
 
       setState("error");
-      setErrorMessage(error instanceof Error ? error.message : "Message failed.");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : translateChatbotText(chatbotTranslationKeys.messageFailed, undefined, props.translate)
+      );
     } finally {
       setIsSending(false);
     }
@@ -194,21 +234,31 @@ export default function ChatBot(
     messages,
     props.onAuthRequired,
     props.systemPrompt,
+    props.translate,
     sendDisabled,
   ]);
 
   return (
     <div className={styles.chatbotcontainer}>
       <div className={styles.header}>
-        <div className={styles.title}>{props.title ?? DEFAULT_TITLE}</div>
+        <div className={styles.title}>
+          {props.title ??
+            translateChatbotText(chatbotTranslationKeys.defaultTitle, undefined, props.translate)}
+        </div>
         <div className={styles.usage}>
-          {usage ? `${usage.used}/${usage.limit} used` : "No usage data"}
+          {usage
+            ? translateChatbotText(
+                chatbotTranslationKeys.usageSummary,
+                { used: usage.used, limit: usage.limit },
+                props.translate
+              )
+            : translateChatbotText(chatbotTranslationKeys.noUsageData, undefined, props.translate)}
         </div>
       </div>
 
       {(state !== "ready" || errorMessage) && (
         <div className={styles.notice}>
-          {errorMessage ?? statusMessage(state, usage)}
+          {errorMessage ?? statusMessage(state, usage, props.translate)}
         </div>
       )}
 
@@ -234,7 +284,14 @@ export default function ChatBot(
               event.stopPropagation();
             }
           }}
-          placeholder={props.placeholder ?? DEFAULT_PLACEHOLDER}
+          placeholder={
+            props.placeholder ??
+            translateChatbotText(
+              chatbotTranslationKeys.defaultPlaceholder,
+              undefined,
+              props.translate
+            )
+          }
         />
 
         <button
@@ -242,14 +299,28 @@ export default function ChatBot(
           className={styles.iconButton}
           onClick={() => setShowEmojiPicker((current) => !current)}
           disabled={state === "signed_out" || state === "limit_reached"}
-          aria-label="Open emoji picker"
+          aria-label={translateChatbotText(
+            chatbotTranslationKeys.openEmojiPicker,
+            undefined,
+            props.translate
+          )}
         >
           <FaSmile className={styles.emojiicon} />
         </button>
 
         {showEmojiPicker && (
           <div className={styles.emojiPicker}>
-            <Suspense fallback={<div>Loading emoji picker...</div>}>
+            <Suspense
+              fallback={
+                <div>
+                  {translateChatbotText(
+                    chatbotTranslationKeys.loadingEmojiPicker,
+                    undefined,
+                    props.translate
+                  )}
+                </div>
+              }
+            >
               <EmojiPicker onEmojiClick={handleEmojiClick} />
             </Suspense>
           </div>
@@ -260,7 +331,11 @@ export default function ChatBot(
           className={styles.iconButton}
           onClick={() => void handleSend()}
           disabled={sendDisabled}
-          aria-label="Send message"
+          aria-label={translateChatbotText(
+            chatbotTranslationKeys.sendMessage,
+            undefined,
+            props.translate
+          )}
         >
           <FaPaperPlane className={styles.sendicon} />
         </button>
