@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: "Version bump type"
+        description: "Version bump type. Use none after a release-prep PR on protected main."
         required: true
         type: choice
-        default: patch
+        default: none
         options:
           - patch
           - minor
@@ -125,22 +125,13 @@ jobs:
 
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_ACCESS=$(node -p "(require('./package.json').publishConfig||{}).access||''")
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-
           SHOULD_PUSH="false"
 
-          case "${BUMP:-patch}" in
+          case "${BUMP:-none}" in
             major|minor|patch)
-              if [ -n "${PREID:-}" ]; then
-                case "${BUMP}" in
-                  major) npm version premajor --preid "${PREID}" -m "chore: release v%s [skip ci]" ;;
-                  minor) npm version preminor --preid "${PREID}" -m "chore: release v%s [skip ci]" ;;
-                  patch) npm version prepatch --preid "${PREID}" -m "chore: release v%s [skip ci]" ;;
-                esac
-              else
-                npm version "${BUMP}" -m "chore: release v%s [skip ci]"
-              fi
-              SHOULD_PUSH="true"
+              echo "Protected main requires version changes through a release-prep PR." >&2
+              echo "Bump package.json/package-lock.json via PR, merge it, then rerun CD with bump=none." >&2
+              exit 1
               ;;
             none)
               echo "No version bump requested."
@@ -153,18 +144,10 @@ jobs:
 
           RELEASE_VERSION=$(node -p "require('./package.json').version")
 
-          # If version already exists on npm, keep bumping patch until free.
-          # This prevents publish failures when tags/versions already exist remotely.
-          while npm view "${PACKAGE_NAME}@${RELEASE_VERSION}" version --registry https://registry.npmjs.org >/dev/null 2>&1; do
-            if [ "${BUMP:-patch}" = "none" ]; then
-              echo "Version already exists on npm and bump=none was requested: ${PACKAGE_NAME}@${RELEASE_VERSION}" >&2
-              exit 1
-            fi
-            echo "Version already exists on npm (${PACKAGE_NAME}@${RELEASE_VERSION}); bumping patch..."
-            npm version patch -m "chore: release v%s [skip ci]"
-            SHOULD_PUSH="true"
-            RELEASE_VERSION=$(node -p "require('./package.json').version")
-          done
+          if npm view "${PACKAGE_NAME}@${RELEASE_VERSION}" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "Version already exists on npm: ${PACKAGE_NAME}@${RELEASE_VERSION}" >&2
+            exit 1
+          fi
 
           RELEASE_TAG="v${RELEASE_VERSION}"
 
@@ -194,12 +177,13 @@ jobs:
         with:
           subject-path: sbom.cdx.json
 
-      - name: Push release commit and tag
+      - name: Push release tag
         if: ${{ steps.release.outputs.should_push == 'true' }}
+        env:
+          TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
-          git push
-          git push --tags
+          git push origin "$TAG"
 
       - name: Create GitHub Release draft (immutable-safe)
         env:
