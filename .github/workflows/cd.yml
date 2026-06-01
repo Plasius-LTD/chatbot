@@ -19,192 +19,35 @@ on:
         type: string
 
 permissions:
+  actions: read
   contents: write
-  id-token: write
+  id-token: write # for npm provenance and SBOM attestations
   attestations: write
 
-concurrency:
-  group: npm-cd-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    environment: production
+  select-runner:
+    uses: Plasius-LTD/plasius-ltd-site/.github/workflows/package-runner.yml@main
+    permissions:
+      actions: read
+      contents: read
+    secrets: inherit
 
+  publish:
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - name: Publish package
+        uses: Plasius-LTD/plasius-ltd-site/.github/actions/package-publish@main
         with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Install deps
-        run: |
-          set -euo pipefail
-          npm ci --no-fund --no-audit --legacy-peer-deps || npm install --no-fund --no-audit --legacy-peer-deps
-
-      - name: Test
-        run: npm run test
-
-      - name: Prepare release metadata
-        id: release
+          bump: ${{ inputs.bump }}
+          preid: ${{ inputs.preid }}
         env:
-          BUMP: ${{ inputs.bump }}
-          PREID: ${{ inputs.preid }}
-        run: |
-          set -euo pipefail
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git reset --hard HEAD
-          git clean -fd
-
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_ACCESS=$(node -p "(require('./package.json').publishConfig||{}).access||''")
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-
-          SHOULD_PUSH="false"
-
-          case "${BUMP:-patch}" in
-            major|minor|patch)
-              if [ -n "${PREID:-}" ]; then
-                case "${BUMP}" in
-                  major) npm version premajor --preid "${PREID}" -m "chore: release v%s [skip ci]" ;;
-                  minor) npm version preminor --preid "${PREID}" -m "chore: release v%s [skip ci]" ;;
-                  patch) npm version prepatch --preid "${PREID}" -m "chore: release v%s [skip ci]" ;;
-                esac
-              else
-                npm version "${BUMP}" -m "chore: release v%s [skip ci]"
-              fi
-              SHOULD_PUSH="true"
-              ;;
-            none)
-              echo "No version bump requested."
-              ;;
-            *)
-              echo "Unknown bump type: ${BUMP}" >&2
-              exit 1
-              ;;
-          esac
-
-          RELEASE_VERSION=$(node -p "require('./package.json').version")
-
-          # If version already exists on npm, keep bumping patch until free.
-          # This prevents publish failures when tags/versions already exist remotely.
-          while npm view "${PACKAGE_NAME}@${RELEASE_VERSION}" version --registry https://registry.npmjs.org >/dev/null 2>&1; do
-            if [ "${BUMP:-patch}" = "none" ]; then
-              echo "Version already exists on npm and bump=none was requested: ${PACKAGE_NAME}@${RELEASE_VERSION}" >&2
-              exit 1
-            fi
-            echo "Version already exists on npm (${PACKAGE_NAME}@${RELEASE_VERSION}); bumping patch..."
-            npm version patch -m "chore: release v%s [skip ci]"
-            SHOULD_PUSH="true"
-            RELEASE_VERSION=$(node -p "require('./package.json').version")
-          done
-
-          RELEASE_TAG="v${RELEASE_VERSION}"
-
-          if ! git rev-parse "${RELEASE_TAG}" >/dev/null 2>&1; then
-            git tag "${RELEASE_TAG}"
-            SHOULD_PUSH="true"
-          fi
-
-          echo "package_name=${PACKAGE_NAME}" >> "$GITHUB_OUTPUT"
-          echo "package_access=${PACKAGE_ACCESS}" >> "$GITHUB_OUTPUT"
-          echo "release_version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "should_push=${SHOULD_PUSH}" >> "$GITHUB_OUTPUT"
-
-          echo "Prepared release ${PACKAGE_NAME}@${RELEASE_VERSION} (${RELEASE_TAG})"
-
-      - name: Build
-        run: npm run build --if-present
-
-      - name: Generate SBOM (CycloneDX)
-        run: npm sbom --sbom-format=cyclonedx --sbom-type=library --omit dev > sbom.cdx.json
-        continue-on-error: true
-
-      - name: Attest SBOM
-        if: ${{ hashFiles('sbom.cdx.json') != '' }}
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: sbom.cdx.json
-
-      - name: Push release commit and tag
-        if: ${{ steps.release.outputs.should_push == 'true' }}
-        run: |
-          set -euo pipefail
-          git push
-          git push --tags
-
-      - name: Create GitHub Release draft (immutable-safe)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.release.outputs.release_tag }}
-        run: |
-          set -euo pipefail
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            IS_DRAFT="$(gh release view "$TAG" --json isDraft --jq '.isDraft')"
-            if [ "$IS_DRAFT" != "true" ]; then
-              echo "Release $TAG already exists and is published. Immutable releases cannot be modified after publication; cut a new version instead."
-              exit 1
-            fi
-
-            echo "Draft release $TAG already exists; refreshing mutable assets."
-            if [ -s sbom.cdx.json ]; then
-              gh release upload "$TAG" sbom.cdx.json --clobber
-            else
-              echo "Skipping SBOM release upload (file missing or empty)."
-            fi
-          else
-            if [ -s sbom.cdx.json ]; then
-              gh release create "$TAG" sbom.cdx.json --title "Release $TAG" --generate-notes --verify-tag --draft
-            else
-              gh release create "$TAG" --title "Release $TAG" --generate-notes --verify-tag --draft
-            fi
-          fi
-
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PACKAGE_ACCESS: ${{ steps.release.outputs.package_access }}
-        run: |
-          set -euo pipefail
-
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN is required" >&2
-            exit 1
-          fi
-
-          if [ "${PACKAGE_ACCESS}" = "public" ]; then
-            npm publish --access public --provenance --registry https://registry.npmjs.org
-          else
-            npm publish --provenance --registry https://registry.npmjs.org
-          fi
-
-      - name: Publish GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.release.outputs.release_tag }}
-        run: |
-          set -euo pipefail
-
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Expected draft release $TAG to exist before publication."
-            exit 1
-          fi
-
-          IS_DRAFT="$(gh release view "$TAG" --json isDraft --jq '.isDraft')"
-          if [ "$IS_DRAFT" = "true" ]; then
-            gh release edit "$TAG" --draft=false --latest
-          else
-            echo "Release $TAG is already published; skipping publication."
-          fi
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
