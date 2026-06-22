@@ -20,6 +20,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 - **Security**
   - (placeholder)
 
+## [1.1.17] - 2026-06-22
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
 ## [1.1.16] - 2026-06-22
 
 - **Added**
@@ -102,7 +116,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.16...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.17...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
@@ -122,3 +136,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [1.0.0]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.0
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.16]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.16
+[1.1.17]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.17
