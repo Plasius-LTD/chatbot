@@ -12,13 +12,14 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
-  - (placeholder)
+  - Refreshed direct runtime and development dependency baselines to the latest stable published `@plasius/*`, React, OpenAI, Vitest, ESLint, and TypeScript-compatible releases.
 
 - **Fixed**
-  - (placeholder)
+  - Fixed `npm run reset:clean` so it cleans build artifacts before removing local dependencies, allowing clean lockfile regeneration to complete reliably.
+  - Removed the unused `react-router-dom` runtime dependency to reduce lockfile churn and unnecessary consumer install surface.
 
 - **Security**
-  - (placeholder)
+  - Reduced dependency exposure by dropping an unused direct runtime package.
 
 ## [1.1.17] - 2026-06-22
 
