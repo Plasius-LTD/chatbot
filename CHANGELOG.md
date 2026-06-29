@@ -12,6 +12,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [1.1.18] - 2026-06-29
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
   - Refreshed direct runtime and development dependency baselines to the latest stable published `@plasius/*`, React, OpenAI, Vitest, ESLint, and TypeScript-compatible releases.
 
 - **Fixed**
@@ -117,7 +131,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.17...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.18...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
@@ -138,3 +152,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.16]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.16
 [1.1.17]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.17
+[1.1.18]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.18
