@@ -12,7 +12,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
-  - (placeholder)
+  - Refreshed the lockfile to consume `@plasius/profile@1.0.39`, `@plasius/schema@1.2.18`, `@plasius/translations@1.0.23`, and the latest stable compatible ESLint and Vitest releases.
 
 - **Fixed**
   - (placeholder)
