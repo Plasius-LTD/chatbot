@@ -12,6 +12,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [1.1.19] - 2026-07-12
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
   - Refreshed the lockfile to consume `@plasius/profile@1.0.39`, `@plasius/schema@1.2.18`, `@plasius/translations@1.0.23`, and the latest stable compatible ESLint and Vitest releases.
 
 - **Fixed**
@@ -131,7 +145,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.18...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.19...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
@@ -153,3 +167,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [1.1.16]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.16
 [1.1.17]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.17
 [1.1.18]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.18
+[1.1.19]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.19
