@@ -12,7 +12,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
-  - (placeholder)
+  - Updated direct RFC-compliance dependencies to their newly published releases (@plasius/entity-manager 1.0.23, @plasius/error 1.0.22, @plasius/profile 1.0.40, @plasius/schema 1.2.18, and @plasius/translations 1.0.23) for task #26.
 
 - **Fixed**
   - (placeholder)
