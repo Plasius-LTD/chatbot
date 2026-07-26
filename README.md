@@ -68,9 +68,10 @@ npm run demo:run
 
 This package is published via GitHub CD only.
 
-1. Configure repository environment `production` with secret `NPM_TOKEN`.
-2. Run `.github/workflows/cd.yml` via **Actions -> CD (Publish to npm) -> Run workflow**.
-3. Select the version bump (`patch`, `minor`, `major`, or `none`) and optional pre-release id.
+Before CD is re-enabled, bind the npm trusted publisher to this repository,
+workflow `cd.yml`, and environment `production`, then remove the legacy token
+fallback. Once verified, run `.github/workflows/cd.yml` from `main` and select
+the requested version bump. Never publish from a local machine.
 
 ## Governance
 
@@ -82,3 +83,13 @@ This package is published via GitHub CD only.
 ## License
 
 MIT
+
+<!-- BEGIN PLASIUS RELEASE INTEGRITY -->
+## Release integrity
+
+CI keeps the administrative contributor registry outside Git and npm package
+artifacts using exact, case-normalised path checks. CI runs on approved
+self-hosted runners. Release preparation and npm publication use GitHub-hosted
+runners with Node.js 24.18.0 LTS. CD remains disabled until the npm trusted
+publisher binding is verified and the legacy token fallback is removed.
+<!-- END PLASIUS RELEASE INTEGRITY -->
