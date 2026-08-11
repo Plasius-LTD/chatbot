@@ -68,10 +68,11 @@ npm run demo:run
 
 This package is published via GitHub CD only.
 
-Before CD is re-enabled, bind the npm trusted publisher to this repository,
-workflow `cd.yml`, and environment `production`, then remove the legacy token
-fallback. Once verified, run `.github/workflows/cd.yml` from `main` and select
-the requested version bump. Never publish from a local machine.
+Before dispatch, bind the npm trusted publisher to this repository, workflow
+`cd.yml`, and environment `production`. Once verified, run the token-free
+workflow from `main` and select the requested version bump. Publication requires
+the prepared SHA to remain the exact `main` head, successful push-triggered CI,
+Node 24, and npm 11.5.1 or newer. Never publish from a local machine.
 
 ## Governance
 
@@ -89,7 +90,7 @@ MIT
 
 CI keeps the administrative contributor registry outside Git and npm package
 artifacts using exact, case-normalised path checks. CI runs on approved
-self-hosted runners. Release preparation and npm publication use GitHub-hosted
-runners with Node.js 24.18.0 LTS. CD remains disabled until the npm trusted
-publisher binding is verified and the legacy token fallback is removed.
+self-hosted runners for same-repository pull requests and `main`; fork PR code
+is denied. Release preparation and npm publication use the GitHub-hosted
+`production` job and the exact-main admission described above.
 <!-- END PLASIUS RELEASE INTEGRITY -->
