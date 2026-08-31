@@ -29,7 +29,12 @@ describe("package release trust boundary", () => {
     expect(ciWorkflow).toContain("pull_request:");
     expect(ciWorkflow).toContain("workflow_dispatch:");
     expect(ciWorkflow).not.toMatch(/\n\s+cache:\s*["']?npm["']?/u);
-    expect(ciWorkflow).toContain("runs-on: [self-hosted, Linux, X64]");
+    expect(
+      ciWorkflow.match(/runs-on:\n {6}group: Public CI - Quarantined/gu),
+    ).toHaveLength(2);
+    expect(
+      ciWorkflow.match(/labels: \[self-hosted, Linux, X64\]/gu),
+    ).toHaveLength(2);
     expect(ciWorkflow).toContain("github.event.pull_request.head.repo.full_name == github.repository");
     expect(ciWorkflow).not.toContain("pull_request_target");
     expect(ciWorkflow).not.toContain("fromJSON(vars.");

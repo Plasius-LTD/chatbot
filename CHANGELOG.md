@@ -12,6 +12,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - Routed reviewed CI through the organisation's quarantined public runner group while retaining explicit platform labels.
   - Refreshed transitive dependency resolutions to clear the current npm audit findings.
   - Bound npm publication to the exact prepared `main` commit after successful push-triggered CI.
   - Enabled exact-head manual CI dispatch for reviewed release validation.
