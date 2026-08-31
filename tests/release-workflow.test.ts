@@ -6,6 +6,24 @@ const readWorkflow = (name: string): string =>
   readFileSync(resolve(process.cwd(), `.github/workflows/${name}.yml`), "utf8");
 const cdWorkflow = readWorkflow("cd");
 const ciWorkflow = readWorkflow("ci");
+const packageManifest = JSON.parse(
+  readFileSync(resolve(process.cwd(), "package.json"), "utf8"),
+) as {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+
+describe("React package boundary", () => {
+  it("uses the host React instance instead of shipping a second copy", () => {
+    expect(packageManifest.dependencies).not.toHaveProperty("react");
+    expect(packageManifest.dependencies).not.toHaveProperty("react-dom");
+    expect(packageManifest.peerDependencies?.react).toBe("^19");
+    expect(packageManifest.devDependencies?.react).toBe(
+      packageManifest.devDependencies?.["react-dom"],
+    );
+  });
+});
 
 describe("package release trust boundary", () => {
   it("uses exact-main hosted OIDC publication without write tokens", () => {
