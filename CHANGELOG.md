@@ -12,11 +12,14 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - Routed reviewed CI through the organisation's quarantined public runner group while retaining explicit platform labels.
   - Refreshed transitive dependency resolutions to clear the current npm audit findings.
   - Bound npm publication to the exact prepared `main` commit after successful push-triggered CI.
   - Enabled exact-head manual CI dispatch for reviewed release validation.
 
 - **Fixed**
+  - Kept React and React DOM out of production dependencies so consumers use
+    the host React instance required by the package's peer contract.
   - Disabled package-manager caching on self-hosted CI to prevent cache-save
     cleanup stalls from blocking the validation queue.
   - (placeholder)

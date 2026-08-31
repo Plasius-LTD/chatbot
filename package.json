@@ -31,15 +31,13 @@
   "author": "Plasius LTD <development@plasius.co.uk>",
   "license": "MIT",
   "dependencies": {
-    "@plasius/entity-manager": "^1.0.23",
+    "@plasius/entity-manager": "^1.2.2",
     "@plasius/error": "^1.0.22",
-    "@plasius/profile": "^1.0.40",
-    "@plasius/schema": "^1.2.18",
+    "@plasius/profile": "^1.0.41",
+    "@plasius/schema": "^1.4.3",
     "@plasius/translations": "^1.0.23",
     "emoji-picker-react": "^4.19.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-icons": "^5.6.0"
+    "react-icons": "^5.7.0"
   },
   "peerDependencies": {
     "openai": "^6",
@@ -48,22 +46,22 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.17",
-    "@typescript-eslint/eslint-plugin": "^8.62.0",
-    "@typescript-eslint/parser": "^8.62.0",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.2.18",
+    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/parser": "^8.69.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "ajv": "^8.20.0",
-    "eslint": "^10.6.0",
-    "globals": "^17.7.0",
+    "eslint": "^10.9.1",
+    "globals": "^17.11.0",
     "jsdom": "^29.1.1",
     "npm-run-all": "^4.1.5",
-    "openai": "^6.45.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "tsx": "^4.22.4",
+    "openai": "^6.49.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "minimatch": "^10.2.1"
@@ -117,5 +115,5 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "npm@11.14.1"
+  "packageManager": "npm@11.19.1"
 }

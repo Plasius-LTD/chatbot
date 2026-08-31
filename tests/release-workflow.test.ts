@@ -6,6 +6,24 @@ const readWorkflow = (name: string): string =>
   readFileSync(resolve(process.cwd(), `.github/workflows/${name}.yml`), "utf8");
 const cdWorkflow = readWorkflow("cd");
 const ciWorkflow = readWorkflow("ci");
+const packageManifest = JSON.parse(
+  readFileSync(resolve(process.cwd(), "package.json"), "utf8"),
+) as {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+
+describe("React package boundary", () => {
+  it("uses the host React instance instead of shipping a second copy", () => {
+    expect(packageManifest.dependencies).not.toHaveProperty("react");
+    expect(packageManifest.dependencies).not.toHaveProperty("react-dom");
+    expect(packageManifest.peerDependencies?.react).toBe("^19");
+    expect(packageManifest.devDependencies?.react).toBe(
+      packageManifest.devDependencies?.["react-dom"],
+    );
+  });
+});
 
 describe("package release trust boundary", () => {
   it("uses exact-main hosted OIDC publication without write tokens", () => {
@@ -25,11 +43,13 @@ describe("package release trust boundary", () => {
     expect(cdWorkflow).not.toMatch(/NPM_TOKEN|NODE_AUTH_TOKEN/u);
   });
 
-  it("keeps same-repository pull-request CI on explicit trusted runners", () => {
+  it("uses hosted pull-request runners and trusted repository runners", () => {
     expect(ciWorkflow).toContain("pull_request:");
     expect(ciWorkflow).toContain("workflow_dispatch:");
     expect(ciWorkflow).not.toMatch(/\n\s+cache:\s*["']?npm["']?/u);
-    expect(ciWorkflow).toContain("runs-on: [self-hosted, Linux, X64]");
+    expect(ciWorkflow.match(/runs-on: \$\{\{ fromJSON\(github\.event_name == 'pull_request'/gu)).toHaveLength(2);
+    expect(ciWorkflow).toContain('["ubuntu-latest"]');
+    expect(ciWorkflow).toContain('["self-hosted","Linux","X64"]');
     expect(ciWorkflow).toContain("github.event.pull_request.head.repo.full_name == github.repository");
     expect(ciWorkflow).not.toContain("pull_request_target");
     expect(ciWorkflow).not.toContain("fromJSON(vars.");
