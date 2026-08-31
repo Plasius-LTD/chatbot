@@ -13,12 +13,17 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 - **Changed**
   - Refreshed transitive dependency resolutions to clear the current npm audit findings.
+  - Bound npm publication to the exact prepared `main` commit after successful push-triggered CI.
+  - Enabled exact-head manual CI dispatch for reviewed release validation.
 
 - **Fixed**
+  - Disabled package-manager caching on self-hosted CI to prevent cache-save
+    cleanup stalls from blocking the validation queue.
   - (placeholder)
 
 - **Security**
   - Added fail-closed source and npm-package admission for the administrative contributor registry and pinned the CI/CD runtime to Node.js 24.18.0 LTS.
+  - Removed the npm write-token path, added a fail-closed npm 11.5.1-or-newer OIDC guard, and denied fork PR code access to self-hosted CI.
   - (placeholder)
 
 ## [1.1.20] - 2026-07-13
