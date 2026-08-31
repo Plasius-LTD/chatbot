@@ -14,6 +14,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 - **Changed**
   - Refreshed transitive dependency resolutions to clear the current npm audit findings.
   - Bound npm publication to the exact prepared `main` commit after successful push-triggered CI.
+  - Enabled exact-head manual CI dispatch for reviewed release validation.
 
 - **Fixed**
   - (placeholder)
