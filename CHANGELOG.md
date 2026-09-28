@@ -8,6 +8,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [1.1.21] - 2026-09-28
+
 - Refresh npm dependencies and published Plasius package baselines after upstream releases (2026-09-28).
 
 - **Added**
@@ -171,7 +185,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.20...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.21...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
@@ -195,3 +209,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [1.1.18]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.18
 [1.1.19]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.19
 [1.1.20]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.20
+[1.1.21]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.21
