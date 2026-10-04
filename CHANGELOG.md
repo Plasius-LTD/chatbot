@@ -8,6 +8,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [1.1.22] - 2026-10-04
+
 - Refresh npm dependency lockfile to current supported stable versions (weekly maintenance, 2026-10-04). Refresh published Plasius package baselines after upstream releases.
 
 - **Added**
@@ -187,7 +201,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.21...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.22...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
@@ -212,3 +226,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [1.1.19]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.19
 [1.1.20]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.20
 [1.1.21]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.21
+[1.1.22]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.22
