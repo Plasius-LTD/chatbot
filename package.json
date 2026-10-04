@@ -31,11 +31,11 @@
   "author": "Plasius LTD <development@plasius.co.uk>",
   "license": "MIT",
   "dependencies": {
-    "@plasius/entity-manager": "^1.2.4",
-    "@plasius/error": "^1.0.23",
-    "@plasius/profile": "^1.0.44",
-    "@plasius/schema": "^1.4.4",
-    "@plasius/translations": "^1.0.24",
+    "@plasius/entity-manager": "^1.2.5",
+    "@plasius/error": "^1.0.24",
+    "@plasius/profile": "^1.0.45",
+    "@plasius/schema": "^1.4.5",
+    "@plasius/translations": "^1.0.25",
     "emoji-picker-react": "^4.19.1",
     "react-icons": "^5.7.0"
   },
