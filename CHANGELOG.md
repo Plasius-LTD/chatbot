@@ -12,6 +12,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [1.1.25] - 2026-10-23
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
   - Typecheck runtime source and all tests using explicit Node 24 and React DOM 19 development declarations.
 
 - **Fixed**
@@ -233,7 +247,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 ---
 
-[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.24...HEAD
+[Unreleased]: https://github.com/Plasius-LTD/chatbot/compare/v1.1.25...HEAD
 [1.0.1]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.0.1
 [1.1.9]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.9
 
@@ -261,3 +275,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [1.1.22]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.22
 [1.1.23]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.23
 [1.1.24]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.24
+[1.1.25]: https://github.com/Plasius-LTD/chatbot/releases/tag/v1.1.25
