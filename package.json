@@ -7,7 +7,7 @@
   "private": false,
   "type": "module",
   "scripts": {
-    "build": "tsc --build --listEmittedFiles && rsync -av --include '*/' --include '*.module.css' --exclude '*' src/ dist/ || true && npm run build:cjs",
+    "build": "tsc --build --listEmittedFiles && node scripts/copy-css-assets.cjs dist && npm run build:cjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -21,7 +21,7 @@
     "audit:npm": "npm audit --audit-level=high --omit=dev",
     "audit:test": "vitest run --coverage",
     "audit:all": "npm-run-all -l audit:ts audit:eslint audit:deps audit:npm audit:test",
-    "build:cjs": "tsc -p tsconfig.json --module commonjs --moduleResolution node --outDir dist-cjs --tsBuildInfoFile dist-cjs/tsconfig.tsbuildinfo --listEmittedFiles && rsync -av --include '*/' --include '*.module.css' --exclude '*' src/ dist-cjs/ || true && node scripts/write-cjs-package-json.cjs",
+    "build:cjs": "tsc -p tsconfig.json --module commonjs --moduleResolution node --outDir dist-cjs --tsBuildInfoFile dist-cjs/tsconfig.tsbuildinfo --listEmittedFiles && node scripts/copy-css-assets.cjs dist-cjs && node scripts/write-cjs-package-json.cjs",
     "lint": "eslint . --max-warnings=0",
     "prepare": "npm run build",
     "demo:run": "npm run build && node demo/example.mjs",

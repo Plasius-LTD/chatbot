@@ -55,3 +55,13 @@ describe("package release trust boundary", () => {
     expect(ciWorkflow).not.toContain("fromJSON(vars.");
   });
 });
+
+
+describe("CSS asset release admission", () => {
+  it("validates package contents after building in CI and before CD publication", () => {
+    expect(ciWorkflow).toContain("run: npm run pack:check");
+    expect(ciWorkflow.indexOf("run: npm run pack:check")).toBeGreaterThan(ciWorkflow.indexOf("run: npm run build"));
+    expect(cdWorkflow.indexOf("npm run pack:check")).toBeGreaterThan(cdWorkflow.indexOf("npm run build"));
+    expect(cdWorkflow.indexOf("npm run pack:check")).toBeLessThan(cdWorkflow.indexOf("- name: Publish package through npm OIDC"));
+  });
+});

@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-const { execSync } = require("node:child_process");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-function main() {
-  const cacheDir = path.resolve(process.cwd(), ".npm-cache", "packcheck");
-  const output = execSync(
-    `npm pack --dry-run --json --ignore-scripts --cache "${cacheDir}"`,
+function main(root = process.cwd()) {
+  const cacheDir = path.resolve(root, ".npm-cache", "packcheck");
+  const output = execFileSync(
+    "npm",
+    ["pack", "--dry-run", "--json", "--ignore-scripts", "--cache", cacheDir],
     {
       encoding: "utf8",
+      cwd: root,
       stdio: ["ignore", "pipe", "pipe"],
     }
   );
@@ -17,8 +19,10 @@ function main() {
   const files = Array.isArray(parsed) && parsed[0]?.files ? parsed[0].files : [];
   const paths = files.map((entry) => entry.path);
 
-  verifyCjsMetadata();
+  verifyCjsMetadata(root);
   ensureTarballIncludes(paths, "dist-cjs/package.json");
+  ensureTarballIncludes(paths, "dist/styles/chatbot.module.css");
+  ensureTarballIncludes(paths, "dist-cjs/styles/chatbot.module.css");
 
   const forbiddenTarballPathPatterns = [
     {
@@ -52,7 +56,7 @@ function main() {
     for (const filePath of forbiddenPaths) {
       console.error(`- ${filePath}`);
     }
-    process.exit(1);
+    throw new Error("Forbidden publish paths found.");
   }
 
   const forbiddenCodeReferencePatterns = [
@@ -83,7 +87,8 @@ function main() {
   const violations = scanCodeReferences(
     codeRoots,
     codeExtensions,
-    forbiddenCodeReferencePatterns
+    forbiddenCodeReferencePatterns,
+    root
   );
 
   if (violations.length > 0) {
@@ -93,20 +98,20 @@ function main() {
     for (const violation of violations) {
       console.error(`- ${violation.file}:${violation.line} (${violation.label})`);
     }
-    process.exit(1);
+    throw new Error("Forbidden private/product code references found.");
   }
 
   console.log("Public package check passed.");
 }
 
 
-function verifyCjsMetadata() {
-  const distCjsPackageJsonPath = path.resolve(process.cwd(), "dist-cjs/package.json");
+function verifyCjsMetadata(root) {
+  const distCjsPackageJsonPath = path.resolve(root, "dist-cjs/package.json");
   if (!fs.existsSync(distCjsPackageJsonPath)) {
     console.error(
       "Public package check failed. Missing dist-cjs/package.json for CommonJS runtime metadata."
     );
-    process.exit(1);
+    throw new Error("Missing CommonJS runtime metadata.");
   }
 
   const rawDistCjsPackageJson = fs.readFileSync(distCjsPackageJsonPath, "utf8");
@@ -115,21 +120,21 @@ function verifyCjsMetadata() {
     parsedDistCjsPackageJson = JSON.parse(rawDistCjsPackageJson);
   } catch {
     console.error("Public package check failed. dist-cjs/package.json is not valid JSON.");
-    process.exit(1);
+    throw new Error("Invalid CommonJS runtime metadata JSON.");
   }
 
   if (parsedDistCjsPackageJson.type !== "commonjs") {
     console.error(
       "Public package check failed. dist-cjs/package.json must set {\"type\":\"commonjs\"}."
     );
-    process.exit(1);
+    throw new Error("Invalid CommonJS runtime metadata type.");
   }
 }
 
 function ensureTarballIncludes(paths, requiredPath) {
   if (!paths.includes(requiredPath)) {
     console.error(`Public package check failed. npm pack output is missing ${requiredPath}.`);
-    process.exit(1);
+    throw new Error(`npm pack output is missing ${requiredPath}.`);
   }
 }
 function parseNpmPackJson(rawOutput) {
@@ -144,10 +149,10 @@ function parseNpmPackJson(rawOutput) {
   return JSON.parse(jsonSlice);
 }
 
-function scanCodeReferences(roots, extensions, patterns) {
+function scanCodeReferences(roots, extensions, patterns, packageRoot) {
   const allFiles = [];
   for (const root of roots) {
-    allFiles.push(...collectFiles(path.resolve(process.cwd(), root), extensions));
+    allFiles.push(...collectFiles(path.resolve(packageRoot, root), extensions));
   }
 
   const violations = [];
@@ -163,7 +168,7 @@ function scanCodeReferences(roots, extensions, patterns) {
       const beforeMatch = contents.slice(0, matchIndex);
       const line = beforeMatch.split(/\r?\n/u).length;
       violations.push({
-        file: path.relative(process.cwd(), file),
+        file: path.relative(packageRoot, file),
         line,
         label: pattern.label,
       });
@@ -205,4 +210,5 @@ function collectFiles(root, extensions) {
   return files;
 }
 
-main();
+module.exports = { main };
+if (require.main === module) main();

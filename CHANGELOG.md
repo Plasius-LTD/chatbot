@@ -15,7 +15,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Fixed**
-  - (placeholder)
+  - Fail builds on compiler or required CSS copy errors, copy module CSS with Node.js into both output formats, and reject packages missing either runtime stylesheet in CI/CD.
 
 - **Security**
   - (placeholder)

@@ -58,6 +58,14 @@ npm test
 npm run demo:run
 ```
 
+Builds copy every `src/**/*.module.css` file to its matching path in `dist/`
+and `dist-cjs/` using Node.js. The required `src/styles/chatbot.module.css`
+must exist as a regular file; a compiler or copy failure stops the build,
+including when stale output already exists. No `rsync` installation is needed.
+Run `npm run pack:check` after building to verify both runtime CSS modules and
+the CommonJS metadata are included in the actual npm dry-run file list.
+CI and CD enforce this check before publication.
+
 ## Demo Sanity Check
 
 ```bash
