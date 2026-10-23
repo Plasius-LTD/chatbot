@@ -32,7 +32,11 @@ after CI build; CD already runs build and package admission before publication.
 
 Node built-ins suffice. Existing `@plasius/*` packages provide runtime product
 contracts, not this repository's build asset operation; no shared package,
-public API, runtime dependency, or lockfile change is needed. This Task is
+public API or runtime dependency is needed. Strict test checking requires the
+previously absent `@types/node` (24.19.2, with `undici-types` 7.24.6) and
+`@types/react-dom` (19.3.0). Pin these development-only declarations and extend
+`typecheck` to the complete test suite through `tsconfig.tests.json`; retain
+the existing source check and Vitest globals. No existing dependency is upgraded. This Task is
 explicitly repository-operational maintenance with no product Feature, remote
 flag, or capability. Asset integrity is unconditional.
 

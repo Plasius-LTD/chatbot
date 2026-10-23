@@ -64,7 +64,9 @@ must exist as a regular file; a compiler or copy failure stops the build,
 including when stale output already exists. No `rsync` installation is needed.
 Run `npm run pack:check` after building to verify both runtime CSS modules and
 the CommonJS metadata are included in the actual npm dry-run file list.
-CI and CD enforce this check before publication.
+CI and CD enforce this check before publication. `npm run typecheck` validates
+both runtime source and the complete test suite with the pinned development
+types for Node 24 and React DOM 19.
 
 ## Demo Sanity Check
 
